@@ -56,5 +56,6 @@ lapply(dta, function(x) (sum(is.na(x))))
 dta <- dta %>%
   mutate(cancer_death = (ICD9_MT >=140 & ICD9_MT <=208),
          cancer_death = if_else(is.na(cancer_death), FALSE, cancer_death),
-         cancer_death = as.numeric(cancer_death))
+         cancer_death = as.numeric(cancer_death),
+         BMI = WT/(HEIGHT/100)^2) # height is in the cm scale
 ```
