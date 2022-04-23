@@ -18,7 +18,7 @@ NHANES2 <- read.csv("NHANES2.csv")
 
 ```{r}
 dta <- NHANES2 %>% 
-  select('ROWNAMES','SEX','ICD9_MT','AGEDIE','SIZE',
+  select('ROWNAMES','SEX',"BOOZE",'ICD9_MT','AGEDIE','SIZE',
                     'URBAN','RACE','MARRY','DEATH','AGEYRS',
           'SERVITC','RECEX','SATFAT','SMSA',
                     'GRADES','SCHOOL','AVGSMK',
@@ -57,5 +57,8 @@ dta <- dta %>%
   mutate(cancer_death = (ICD9_MT >=140 & ICD9_MT <=208),
          cancer_death = if_else(is.na(cancer_death), FALSE, cancer_death),
          cancer_death = as.numeric(cancer_death),
-         BMI = WT/(HEIGHT/100)^2) # height is in the cm scale
+         BMI = WT/(HEIGHT/100)^2,
+         BOOZE_q = cut(BOOZE,breaks =  c(-1, 0,0.5, 2.0, 77.0),
+                       include.lowest = T)) # height is in the cm scale
+saveRDS(dta, "clean_data_0422.rds")
 ```
