@@ -21,7 +21,7 @@ dta <- NHANES2 %>%
                     'URBAN','RACE','MARRY','DEATH','AGEYRS',
           'SERVITC','RECEX','SATFAT','SMSA',
                     'GRADES','SCHOOL','AVGSMK',
-         'DRMI', "HDL", "RBC", "WT", "HTN_REP", "HEIGHT")
+         'DRMI', "HDL", "RBC", "WT", "HTN_REP", "HEIGHT", "EXAM_YR", "DIE_YR")
 ```
 
 
