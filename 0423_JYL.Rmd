@@ -92,18 +92,38 @@ resi6<-cox.zph(cox_fit_6)
 resi6
 plot(resi6, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_6)[1])
+
+coef<-coef(cox_fit_6)[c(3,14)] %>% as.matrix(ncol=1)
+vcov<-vcov(cox_fit_6)[c(3,14),c(3,14)]
+var=t(coef)%*%vcov%*%coef
+
+beta <- coef(cox_fit_6)[c(3,14)]
+SE <- c(coef(summary(cox_fit_6))[3,3], sqrt(var))
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+cbind(exp(beta), exp(lcl), exp(ucl))
 ```
 
 \newpage
 
-## ~ BOOZE_q + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, stratify by SEX 
+## ~ BOOZE_q +BOOZE_q*stratify(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, stratify by SEX 
 ```{r echo=FALSE, fig.height=4}
-cox_fit_7<-coxph(Surv(AGEYRS, AGEDIE, cancer_death)~BOOZE_q + strata(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, data=data)
+cox_fit_7<-coxph(Surv(AGEYRS, AGEDIE, cancer_death)~BOOZE_q + strata(SEX)+ BOOZE_q*strata(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, data=data)
 summary(cox_fit_7)
 resi7<-cox.zph(cox_fit_7)
 resi7
 plot(resi7, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_7)[1])
+
+coef<-coef(cox_fit_7)[c(3,13)] %>% as.matrix(ncol=1)
+vcov<-vcov(cox_fit_7)[c(3,13),c(3,13)]
+var=t(coef)%*%vcov%*%coef
+
+beta <- coef(cox_fit_7)[c(3,13)]
+SE <- c(coef(summary(cox_fit_7))[3,3], sqrt(var))
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+cbind(exp(beta), exp(lcl), exp(ucl))
 ```
 
 
@@ -147,9 +167,9 @@ abline(h=coef(cox_fit_c3)[1])
 
 \newpage
 
-## ~ BOOZE, stratify by SEX 
+## ~ BOOZE +BOOZE*SEX, stratify by SEX 
 ```{r echo=FALSE, fig.height=4}
-cox_fit_c4<-coxph(Surv(AGEYRS, AGEDIE, cancer_death)~BOOZE+strata(SEX), data=data)
+cox_fit_c4<-coxph(Surv(AGEYRS, AGEDIE, cancer_death)~BOOZE+strata(SEX)+BOOZE*SEX, data=data)
 summary(cox_fit_c4)
 resic4<-cox.zph(cox_fit_c4)
 resic4
@@ -179,18 +199,38 @@ resic6<-cox.zph(cox_fit_c6)
 resic6
 plot(resic6, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_c6)[1])
+
+coef<-coef(cox_fit_c6)[c(1,10)] %>% as.matrix(ncol=1)
+vcov<-vcov(cox_fit_c6)[c(1,10),c(1,10)]
+var=t(coef)%*%vcov%*%coef
+
+beta <- coef(cox_fit_c6)[c(1,10)]
+SE <- c(coef(summary(cox_fit_c6))[1,3], sqrt(var))
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+cbind(exp(beta), exp(lcl), exp(ucl))
 ```
 
 \newpage
 
-## ~ BOOZE + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, stratify by SEX 
+## ~ BOOZE +BOOZE*strata(SEX)+ RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, stratify by SEX 
 ```{r echo=FALSE, fig.height=4}
-cox_fit_c7<-coxph(Surv(AGEYRS, AGEDIE, cancer_death)~BOOZE + strata(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, data=data)
+cox_fit_c7<-coxph(Surv(AGEYRS, AGEDIE, cancer_death)~BOOZE +BOOZE*strata(SEX)+ strata(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN, data=data)
 summary(cox_fit_c7)
 resic7<-cox.zph(cox_fit_c7)
 resic7
 plot(resic7, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_c7)[1])
+
+coef<-coef(cox_fit_c7)[c(1,9)] %>% as.matrix(ncol=1)
+vcov<-vcov(cox_fit_c7)[c(1,9),c(1,9)]
+var=t(coef)%*%vcov%*%coef
+
+beta <- coef(cox_fit_c7)[c(1,9)]
+SE <- c(coef(summary(cox_fit_c7))[1,3], sqrt(var))
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+cbind(exp(beta), exp(lcl), exp(ucl))
 ```
 
 # ordinal BOOZE_q_ordinal
