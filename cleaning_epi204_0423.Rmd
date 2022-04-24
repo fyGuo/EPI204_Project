@@ -17,7 +17,7 @@ NHANES2 <- read.csv("NHANES2.csv")
 
 ```{r}
 dta <- NHANES2 %>% 
-  select('ROWNAMES','SEX',"BOOZE",'ICD9_MT','AGEDIE','SIZE',
+  select('ROWNAMES','SEX',"BOOZE",'ICD9_MT','AGEDIE','SIZE', "DIAB",
                     'URBAN','RACE','MARRY','DEATH','AGEYRS',
           'SERVITC','RECEX','SATFAT','SMSA',
                     'GRADES','SCHOOL','AVGSMK',
