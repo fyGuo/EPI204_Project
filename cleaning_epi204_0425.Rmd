@@ -1,0 +1,80 @@
+---
+title: "Cleaning_data"
+date: "4/25/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse) 
+NHANES2 <- read.csv("NHANES2.csv") 
+```
+
+
+```{r}
+dta <- NHANES2 %>% 
+  select('ROWNAMES','SEX',"BOOZE",'ICD9_MT','AGEDIE','SIZE',
+                    'URBAN','RACE','MARRY','DEATH','AGEYRS',
+          'SERVITC','RECEX','SATFAT','SMSA',
+                    'GRADES','SCHOOL','AVGSMK',
+         'DRMI', "HDL", "RBC", "WT", "HTN_REP", "HEIGHT", "EXAM_YR", "DIE_YR", "LAST_YR")
+```
+
+
+```{r}
+# exclude missing death people
+dta <- dta %>%
+  filter(!is.na(DEATH))
+
+# only 9250 participants now
+# check other missing values
+
+lapply(dta, function(x) (sum(is.na(x))))
+
+# there are 639 missing in serum vitamin C. Although the vitamin C is important, to keep a large sample
+dta <- dta %>% dplyr::select(!SERVITC)
+lapply(dta, function(x) (sum(is.na(x))))
+
+# there are 657 with missing in their highest school but no missing in grade, we exclude SCHOOL and use GRADE instead
+dta <- dta %>% dplyr::select(!SCHOOL)
+lapply(dta, function(x) (sum(is.na(x))))
+
+# too many missings in HDL, 1679. exclude HDL
+dta <- dta %>% dplyr::select(!HDL)
+lapply(dta, function(x) (sum(is.na(x))))
+
+# not much missing, we can exclude missing observations when we use them
+```
+
+```{r}
+# ICD9_MT is coded as numeric variables so we can just use the below method to choose the death from cancer
+dta <- dta %>%
+  mutate(cancer_death = (ICD9_MT >=140 & ICD9_MT <=208),
+         cancer_death = if_else(is.na(cancer_death), FALSE, cancer_death),
+         cancer_death = as.numeric(cancer_death),
+         BMI = WT/(HEIGHT/100)^2,
+         BOOZE_q = cut(BOOZE,breaks =  c(-1, 0, 0.5, 2.0, 77.0),
+                       include.lowest = T)) # height is in the cm scale
+dim(dta) #9250   24
+
+# If dead: age_last = age_die
+# If cencored: age_last = ageyrs + last_yr-exam_yr
+dta$AGE_LAST<-ifelse(is.na(dta$AGEDIE), dta$AGEYRS+dta$LAST_YR-dta$EXAM_YR, dta$AGEDIE)
+#dta<-dta[,c("AGEYRS","AGEDIE","AGE_LAST","cancer_death","DIE_YR","EXAM_YR", "LAST_YR")]
+```
+
+
+```{r}
+idx1=which(dta$AGEYRS>=dta$AGE_LAST) # remove 32 rows: if age at enrollment>=age at last check up
+idx2<-which(is.na(dta$DRMI))     # delete 4 rows
+idx3<-which(is.na(dta$HTN_REP))  # delete 6 more rows
+data_cleaned<-dta[c(-idx1, -idx2, -idx3),]
+is.na(data_cleaned)
+dim(data_cleaned) #9208   28
+
+saveRDS(data_cleaned, "clean_data_0425.rds")
+```
