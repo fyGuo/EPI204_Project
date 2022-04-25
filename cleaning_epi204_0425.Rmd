@@ -65,6 +65,11 @@ dim(dta) #9250   24
 # If cencored: age_last = ageyrs + last_yr-exam_yr
 dta$AGE_LAST<-ifelse(is.na(dta$AGEDIE), dta$AGEYRS+dta$LAST_YR-dta$EXAM_YR, dta$AGEDIE)
 #dta<-dta[,c("AGEYRS","AGEDIE","AGE_LAST","cancer_death","DIE_YR","EXAM_YR", "LAST_YR")]
+
+
+# add an event year
+dta$EVENT_YR <- ifelse(is.na(dta$DIE_YR), dta$LAST_YR, dta$DIE_YR)
+
 ```
 
 
