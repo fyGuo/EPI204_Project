@@ -62,17 +62,17 @@ fit2_ord %>% summary()
 ## MV analysis
 ```{r}
 fit3_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS +
-                      SEX + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit3_q %>% summary()
 
 fit3_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS +
-                      SEX + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE)+ as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit3_con %>% summary()
 
 fit3_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord + AGEYRS +
-                      SEX + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit3_ord %>% summary()
 ```
@@ -83,12 +83,12 @@ fit3_ord %>% summary()
 dta$SEX <- if_else(dta$SEX == 1, "Male", "Femlae")
 
 fit4_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + BOOZE_q:SEX + AGEYRS +
-                      SEX + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+                      SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit4_q %>% summary()
-coef <- coef(fit4_q)[c(3, 19)] %>% as.matrix(ncol = 1)
-vcov <- vcov(fit4_q)[c(3, 19), c(3, 19)]
-var <- t(coef) %*% vcov %*% coef
+coef <- coef(fit4_q)[c(3, 31)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit4_q)[c(3, 31), c(3, 31)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
 sd <- sqrt(var)
 mean_male <- coef[2,] + coef[1,]
 exp(mean_male)
@@ -97,13 +97,13 @@ c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 
 
 ```{r}
-fit4_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + BOOZE:SEX + AGEYRS +
-                      SEX + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+fit4_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + BOOZE:SEX  + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit4_con %>% summary()
-coef <- coef(fit4_q)[c(1, 17)] %>% as.matrix(ncol = 1)
-vcov <- vcov(fit4_q)[c(1, 17), c(1, 17)]
-var <- t(coef) %*% vcov %*% coef
+coef <- coef(fit4_con)[c(1, 27)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit4_con)[c(1, 27), c(1, 27)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
 sd <- sqrt(var)
 mean_male <- coef[2,] + coef[1,]
 exp(mean_male)
@@ -111,26 +111,24 @@ c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 ```
 
 ```{r}
-fit5_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + BOOZE_q:strata(SEX) + AGEYRS +
-                      strata(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+fit5_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + strata(SEX) + BOOZE_q:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit5_q %>% summary()
-coef <- coef(fit5_q)[c(3, 18)] %>% as.matrix(ncol = 1)
-vcov <- vcov(fit5_q)[c(3, 18), c(3, 18)]
-var <- t(coef) %*% vcov %*% coef
+coef <- coef(fit5_q)[c(3, 30)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit5_q)[c(3, 30), c(3, 30)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
 sd <- sqrt(var)
 mean_male <- coef[2,] + coef[1,]
 exp(mean_male)
 c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 ```
 ```{r}
-fit5_cont <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + BOOZE:strata(SEX) + AGEYRS +
-                      strata(SEX) + RACE + GRADES + MARRY + SIZE + AVGSMK + SMSA + URBAN + 
+fit5_cont <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + strata(SEX) + BOOZE:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit5_cont %>% summary()
-coef <- coef(fit5_q)[c(1, 16)] %>% as.matrix(ncol = 1)
-vcov <- vcov(fit5_q)[c(1, 16), c(1, 16)]
-var <- t(coef) %*% vcov %*% coef
+coef <- coef(fit5_cont)[c(1, 26)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit5_cont)[c(1, 26), c(1, 26)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
 sd <- sqrt(var)
 mean_male <- coef[2,] + coef[1,]
 exp(mean_male)
