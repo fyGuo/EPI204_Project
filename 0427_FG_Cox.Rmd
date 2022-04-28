@@ -13,12 +13,15 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(survival)
 dta <- readRDS("clean_data_0425.rds")
+
 ```
 
 
 ## Crude analysis
 ```{r}
-dta$fu_time <- dta$DIE_YR - dta$EXAM_YR
+dta$fu_time <- ifelse(!is.na(dta$DIE_YR),  dta$DIE_YR - dta$EXAM_YR,
+                      dta$LAST_YR-dta$EXAM_YR)
+
 dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
 fit1_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q, data = dta)
 fit1_q %>% summary()
@@ -30,24 +33,10 @@ fit1_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord, data = dta)
 fit1_ord %>% summary()
 ```
 
-## Crude analysis
+
+
+## Adjust for age
 ```{r}
-dta$fu_time <- dta$DIE_YR - dta$EXAM_YR
-dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
-fit1_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q, data = dta)
-fit1_q %>% summary()
-
-fit1_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE, data = dta)
-fit1_con %>% summary()
-
-fit1_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord, data = dta)
-fit1_ord %>% summary()
-```
-
-## Crude analysis
-```{r}
-dta$fu_time <- dta$DIE_YR - dta$EXAM_YR
-dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
 fit2_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS, data = dta)
 fit2_q %>% summary()
 
@@ -149,7 +138,7 @@ fit6_q_f %>% summary()
 
 
 z <- (coef(fit6_q_f)[3] - coef(fit6_q_m)[3])/sqrt(vcov(fit6_q_f)[3,3] + vcov(fit6_q_m)[3,3])
-1 - pnorm(z)
+1 - pnorm(abs(z))
 ```
 
 
