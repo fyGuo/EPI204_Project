@@ -1,0 +1,211 @@
+---
+title: "Cox_FG_0427"
+author: "Fuyu Guo"
+date: "4/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(survival)
+dta <- readRDS("clean_data_0425.rds")
+```
+
+
+## Crude analysis
+```{r}
+dta$fu_time <- dta$DIE_YR - dta$EXAM_YR
+dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
+fit1_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q, data = dta)
+fit1_q %>% summary()
+
+fit1_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE, data = dta)
+fit1_con %>% summary()
+
+fit1_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord, data = dta)
+fit1_ord %>% summary()
+```
+
+## Crude analysis
+```{r}
+dta$fu_time <- dta$DIE_YR - dta$EXAM_YR
+dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
+fit1_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q, data = dta)
+fit1_q %>% summary()
+
+fit1_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE, data = dta)
+fit1_con %>% summary()
+
+fit1_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord, data = dta)
+fit1_ord %>% summary()
+```
+
+## Crude analysis
+```{r}
+dta$fu_time <- dta$DIE_YR - dta$EXAM_YR
+dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
+fit2_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS, data = dta)
+fit2_q %>% summary()
+
+fit2_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS, data = dta)
+fit2_con %>% summary()
+
+fit2_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord + AGEYRS, data = dta)
+fit2_ord %>% summary()
+```
+
+
+## MV analysis
+```{r}
+fit3_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit3_q %>% summary()
+
+fit3_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE)+ as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit3_con %>% summary()
+
+fit3_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit3_ord %>% summary()
+```
+
+## Sex interaction
+
+```{r}
+dta$SEX <- if_else(dta$SEX == 1, "Male", "Female")
+
+fit4_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + BOOZE_q:SEX + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit4_q %>% summary()
+coef <- coef(fit4_q)[c(3, 31)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit4_q)[c(3, 31), c(3, 31)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+
+
+```{r}
+fit4_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + BOOZE:SEX  + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit4_con %>% summary()
+coef <- coef(fit4_con)[c(1, 27)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit4_con)[c(1, 27), c(1, 27)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+
+```{r}
+fit5_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + strata(SEX) + BOOZE_q:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit5_q %>% summary()
+coef <- coef(fit5_q)[c(3, 30)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit5_q)[c(3, 30), c(3, 30)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+```{r}
+fit5_cont <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + strata(SEX) + BOOZE:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit5_cont %>% summary()
+coef <- coef(fit5_cont)[c(1, 26)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit5_cont)[c(1, 26), c(1, 26)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+
+
+## Subgroup analysis
+
+```{r}
+fit6_q_m <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Male",])
+fit6_q_m %>% summary()
+
+fit6_q_f <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Female",])
+fit6_q_f %>% summary()
+
+
+z <- (coef(fit6_q_f)[3] - coef(fit6_q_m)[3])/sqrt(vcov(fit6_q_f)[3,3] + vcov(fit6_q_m)[3,3])
+1 - pnorm(z)
+```
+
+
+
+```{r}
+fit6_cont_m <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Male",])
+fit6_cont_m %>% summary()
+
+fit6_cont_f <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Female",])
+fit6_cont_f %>% summary()
+
+
+z <- (coef(fit6_cont_f)[1] - coef(fit6_cont_m)[1])/sqrt(vcov(fit6_cont_f)[1,1] + vcov(fit6_cont_m)[1,1])
+1 - pnorm(z)
+```
+
+
+## PH-assumption
+- MV-adjusted categorical variable
+```{r}
+fit3_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+cox.zph(fit3_q)
+
+
+fit3_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+cox.zph(fit3_con)
+```
+
+## Non-linearity
+```{r}
+library(splines)
+fit_nl <- coxph(Surv(fu_time, cancer_death) ~ ns(BOOZE, knots = 3) + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta)
+fit_nl
+x <- seq(0,21, 0.5)
+loghr <- ns(x, knots = 3) %*% coef(fit_nl)[c(1,2)]
+vcov <- vcov(fit_nl)[c(1,2), c(1,2)]
+ns(x, knots = 3) %*% vcov(fit_nl)[c(1,2), c(1,2)] %*% t(ns(x, knots = 3))
+var <- diag(ns(x, knots = 3) %*% vcov(fit_nl)[c(1,2), c(1,2)] %*% t(ns(x, knots = 3)))
+se <- sqrt(var)
+df <- tibble(x = x,
+             y = loghr, 
+             ymin = loghr - 1.96*se,
+             ymax = loghr + 1.96*se)
+ggplot(df) + 
+    geom_line(aes(x = x, y = y), color = "red", linetype = "dashed")+
+    geom_ribbon(aes(x = x, y = y, ymin = ymin, ymax = ymax),
+                alpha = 0.5, fill = "#DB7093") + 
+    theme_bw() + 
+    labs(x = "Alcohol consumption (drinks/week)",
+         y = "log(HR)")
+```
