@@ -10,13 +10,19 @@ data<-readRDS("clean_data_0425.rds")
 dim(data)  # 9208   29
 unique(is.na(data))
 colnames(data)
+
+data$fu_time <- ifelse(!is.na(data$DIE_YR),  data$DIE_YR - data$EXAM_YR,
+                      data$LAST_YR-dta$EXAM_YR)
+# exclude people whose follow-up time is 0
+data <- data %>% filter(fu_time > 0)
+
 library(survival)
 library(survminer)
 library(KMsurv)
 ```
 
 # categorical BOOZE_q
-
+## Crude analysis
 ```{r echo=FALSE, fig.width=8}
 km_fit_1<-survfit(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE_q, data=data)
 ggsurvplot(km_fit_1, data=data, risk.table=FALSE)
@@ -34,41 +40,6 @@ plot(resi1, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_1)[1])
 ```
 
-\newpage
-
-## ~ BOOZE_q + SEX
-```{r echo=FALSE, fig.height=4}
-cox_fit_2<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE_q+SEX, data=data)
-summary(cox_fit_2)
-resi2<-cox.zph(cox_fit_2)
-resi2
-plot(resi2, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_2)[1])
-```
-
-\newpage
-
-## ~ BOOZE_q + SEX + BOOZE_q * SEX
-```{r echo=FALSE, fig.height=4}
-cox_fit_3<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE_q+SEX+BOOZE_q * SEX, data=data)
-summary(cox_fit_3)
-resi3<-cox.zph(cox_fit_3)
-resi3
-plot(resi3, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_3)[1])
-```
-
-\newpage
-
-## ~ BOOZE_q, stratify by SEX 
-```{r echo=FALSE, fig.height=4}
-cox_fit_4<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE_q+strata(SEX), data=data)
-summary(cox_fit_4)
-resi4<-cox.zph(cox_fit_4)
-resi4
-plot(resi4, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_4)[1])
-```
 
 \newpage
 
@@ -178,7 +149,18 @@ rownames(out)<-c("M","F")
 out
 ```
 
+## subgroup analysis
+```{r echo=FALSE, fig.height=4}
+cox_fit_m<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE_q + BOOZE_q + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, data=data[data$SEX==1,])
+summary(cox_fit_m)
 
+cox_fit_f<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE_q + BOOZE_q + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, data=data[data$SEX==2,])
+summary(cox_fit_f)
+
+z <- (coef(cox_fit_m)[3] -coef(cox_fit_f)[3])/sqrt(vcov(cox_fit_m)[3,3] + vcov(cox_fit_f)[3,3])
+p <- 1-pnorm(abs(z))
+p
+```
 \newpage
 
 # continuous BOOZE
@@ -193,41 +175,9 @@ plot(resic1, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_c1)[1])
 ```
 
-\newpage
 
-## ~ BOOZE + SEX
-```{r echo=FALSE, fig.height=4}
-cox_fit_c2<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE+SEX, data=data)
-summary(cox_fit_c2)
-resic2<-cox.zph(cox_fit_c2)
-resic2
-plot(resic2, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_c2)[1])
-```
 
-\newpage
 
-## ~ BOOZE + SEX + BOOZE * SEX
-```{r echo=FALSE, fig.height=4}
-cox_fit_c3<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE+SEX+BOOZE * SEX, data=data)
-summary(cox_fit_c3)
-resic3<-cox.zph(cox_fit_c3)
-resic3
-plot(resic3, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_c3)[1])
-```
-
-\newpage
-
-## ~ BOOZE +BOOZE*SEX, stratify by SEX 
-```{r echo=FALSE, fig.height=4}
-cox_fit_c4<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE+strata(SEX)+BOOZE*SEX, data=data)
-summary(cox_fit_c4)
-resic4<-cox.zph(cox_fit_c4)
-resic4
-plot(resic4, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_c4)[1])
-```
 
 \newpage
 
@@ -289,6 +239,19 @@ rownames(out)=c("M","F")
 out
 ```
 
+## subgroup analysis
+```{r}
+cox_fit_m<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, data=data[data$SEX==1,])
+summary(cox_fit_m)
+
+cox_fit_f<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~BOOZE + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, data=data[data$SEX==2,])
+summary(cox_fit_f)
+
+z <- (coef(cox_fit_m)[1] -coef(cox_fit_f)[1])/sqrt(vcov(cox_fit_m)[1,1] + vcov(cox_fit_f)[1,1])
+p <- 1-pnorm(abs(z))
+p
+```
+
 # ordinal BOOZE_q_ordinal
 
 ## ~ BOOZE_q_ordinal
@@ -301,41 +264,9 @@ plot(resio1, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_o1)[1])
 ```
 
-\newpage
 
-## ~ BOOZE_q_ordinal + SEX
-```{r echo=FALSE, fig.height=4}
-cox_fit_o2<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~as.numeric(BOOZE_q)+SEX, data=data)
-summary(cox_fit_o2)
-resio2<-cox.zph(cox_fit_o2)
-resio2
-plot(resio2, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_o2)[1])
-```
 
-\newpage
 
-## ~ BOOZE_q_ordinal + SEX + BOOZE_q_ordinal * SEX
-```{r echo=FALSE, fig.height=4}
-cox_fit_o3<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~as.numeric(BOOZE_q)+SEX+as.numeric(BOOZE_q) * SEX, data=data)
-summary(cox_fit_o3)
-resio3<-cox.zph(cox_fit_o3)
-resio3
-plot(resio3, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_o3)[1])
-```
-
-\newpage
-
-## ~ BOOZE_q_ordinal, stratify by SEX 
-```{r echo=FALSE, fig.height=4}
-cox_fit_o4<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~as.numeric(BOOZE_q)+strata(SEX), data=data)
-summary(cox_fit_o4)
-resio4<-cox.zph(cox_fit_o4)
-resio4
-plot(resio4, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_o4)[1])
-```
 
 \newpage
 
@@ -348,31 +279,4 @@ resio5
 plot(resio5, resid=FALSE, var=1, col=c("red","blue"))
 abline(h=coef(cox_fit_o5)[1])
 ```
-
-\newpage
-
-## ~ BOOZE_q_ordinal + SEX + BOOZE_q_ordinal * SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN
-```{r echo=FALSE, fig.height=4}
-cox_fit_o6<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~as.numeric(BOOZE_q)+SEX+as.numeric(BOOZE_q)*SEX+ as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, data=data)
-summary(cox_fit_o6)
-resio6<-cox.zph(cox_fit_o6)
-resio6
-plot(resio6, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_o6)[1])
-```
-
-\newpage
-
-## ~ BOOZE_q_ordinal + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, stratify by SEX 
-```{r echo=FALSE, fig.height=4}
-cox_fit_o7<-coxph(Surv(AGEYRS, AGE_LAST, cancer_death)~as.numeric(BOOZE_q) + strata(SEX) + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN, data=data)
-summary(cox_fit_o7)
-resio7<-cox.zph(cox_fit_o7)
-resio7
-plot(resio7, resid=FALSE, var=1, col=c("red","blue"))
-abline(h=coef(cox_fit_o7)[1])
-```
-
-
-
 

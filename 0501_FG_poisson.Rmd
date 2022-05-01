@@ -1,0 +1,212 @@
+---
+title: "poisson"
+date: "05/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(survival)
+dta <- readRDS("clean_data_0425.rds")
+dim(dta)
+```
+
+
+## Crude analysis
+```{r}
+dta$fu_time <- ifelse(!is.na(dta$DIE_YR),  dta$DIE_YR - dta$EXAM_YR,
+                      dta$LAST_YR-dta$EXAM_YR)
+
+dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
+
+dta <- dta %>% filter(fu_time > 0)
+
+dta$log_year <- log(dta$fu_time)
+fit1_q <- glm(cancer_death ~ BOOZE_q, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit1_q %>% summary()
+beta <- coef(fit1_q)
+beta %>% exp()
+
+confint(fit1_q) %>% exp()
+
+fit1_con <- glm(cancer_death ~ BOOZE, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit1_con %>% summary()
+beta <- coef(fit1_con)
+SE <- coef(summary(fit1_con))[,2]
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+(cbind(exp(beta), exp(lcl), exp(ucl)))
+
+fit1_ord <- glm(cancer_death ~ BOOZE_ord, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit1_ord %>% summary()
+
+```
+
+
+
+## Adjust for age
+```{r}
+fit2_q <- glm(cancer_death ~ BOOZE_q + AGEYRS, data = dta, , 
+              offset = log_year,
+              family =poisson())
+fit2_q %>% summary()
+beta <- coef(fit2_q)
+SE <- coef(summary(fit2_q))[,2]
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+(cbind(exp(beta), exp(lcl), exp(ucl)))
+
+fit2_con <- glm(cancer_death ~ BOOZE + AGEYRS, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit2_con %>% summary()
+beta <- coef(fit2_con)
+SE <- coef(summary(fit2_con))[,2]
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+(cbind(exp(beta), exp(lcl), exp(ucl)))
+
+fit2_ord <- glm(cancer_death ~ BOOZE_ord + AGEYRS, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit2_ord %>% summary()
+
+```
+
+
+## MV analysis
+```{r}
+fit3_q <- glm(cancer_death ~ BOOZE_q + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit3_q %>% summary()
+beta <- coef(fit3_q)
+SE <- coef(summary(fit3_q))[,2]
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+(cbind(exp(beta), exp(lcl), exp(ucl)))
+
+fit3_con <- glm(cancer_death ~ BOOZE + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE)+ as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit3_con %>% summary()
+beta <- coef(fit3_con)
+SE <- coef(summary(fit3_con))[,2]
+lcl <- beta-qnorm(0.975)*SE 
+ucl <- beta+qnorm(0.975)*SE
+(cbind(exp(beta), exp(lcl), exp(ucl)))
+
+fit3_ord <- glm(cancer_death ~ BOOZE_ord + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, 
+              offset = log_year,
+              family =poisson())
+fit3_ord %>% summary()
+```
+
+## Sex interaction
+
+```{r}
+dta$SEX <- if_else(dta$SEX == 1, "Male", "Female")
+
+fit4_q <- glm(cancer_death ~ BOOZE_q + BOOZE_q:SEX + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, family =binomial(link='logit'))
+fit4_q %>% summary()
+coef <- coef(fit4_q)[c(3, 31)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit4_q)[c(3, 31), c(3, 31)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+
+
+```{r}
+fit4_con <- glm(cancer_death ~ BOOZE + BOOZE:SEX  + AGEYRS +
+                      SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, family =binomial(link='logit'))
+fit4_con %>% summary()
+coef <- coef(fit4_con)[c(1, 27)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit4_con)[c(1, 27), c(1, 27)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+
+```{r}
+fit5_q <- glm(cancer_death ~ BOOZE_q + strata(SEX) + BOOZE_q:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, family =binomial(link='logit'))
+fit5_q %>% summary()
+coef <- coef(fit5_q)[c(3, 30)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit5_q)[c(3, 30), c(3, 30)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+```{r}
+fit5_cont <- glm(cancer_death ~ BOOZE + strata(SEX) + BOOZE:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta, family =binomial(link='logit'))
+fit5_cont %>% summary()
+coef <- coef(fit5_cont)[c(1, 26)] %>% as.matrix(ncol = 1)
+vcov <- vcov(fit5_cont)[c(1, 26), c(1, 26)]
+var <- t(c(1, 1)) %*% vcov %*% c(1, 1)
+sd <- sqrt(var)
+mean_male <- coef[2,] + coef[1,]
+exp(mean_male)
+c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
+```
+
+
+## Subgroup analysis
+
+```{r}
+fit6_q_m <- glm(cancer_death ~ BOOZE_q + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Male",], family =binomial(link='logit'))
+fit6_q_m %>% summary()
+
+fit6_q_f <- glm(cancer_death ~ BOOZE_q + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Female",], family =binomial(link='logit'))
+fit6_q_f %>% summary()
+
+
+z <- (coef(fit6_q_f)[3] - coef(fit6_q_m)[3])/sqrt(vcov(fit6_q_f)[3,3] + vcov(fit6_q_m)[3,3])
+1 - pnorm(abs(z))
+```
+
+
+
+```{r}
+fit6_cont_m <- glm(cancer_death ~ BOOZE + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Male",], family =binomial(link='logit'))
+fit6_cont_m %>% summary()
+
+fit6_cont_f <- glm(cancer_death ~ BOOZE + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
+                      HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Female",], family =binomial(link='logit'))
+fit6_cont_f %>% summary()
+
+
+z <- (coef(fit6_cont_f)[1] - coef(fit6_cont_m)[1])/sqrt(vcov(fit6_cont_f)[1,1] + vcov(fit6_cont_m)[1,1])
+1 - pnorm(z)
+```
+
+

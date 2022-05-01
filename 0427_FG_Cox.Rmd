@@ -14,13 +14,17 @@ library(tidyverse)
 library(survival)
 dta <- readRDS("clean_data_0425.rds")
 
+
+dta$fu_time <- ifelse(!is.na(dta$DIE_YR),  dta$DIE_YR - dta$EXAM_YR,
+                      dta$LAST_YR-dta$EXAM_YR)
+# exclude people whose follow-up time is 0
+dta <- dta %>% filter(fu_time > 0)
 ```
 
 
 ## Crude analysis
 ```{r}
-dta$fu_time <- ifelse(!is.na(dta$DIE_YR),  dta$DIE_YR - dta$EXAM_YR,
-                      dta$LAST_YR-dta$EXAM_YR)
+
 
 dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
 fit1_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q, data = dta)
@@ -66,7 +70,9 @@ fit3_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord + AGEYRS +
 fit3_ord %>% summary()
 ```
 
-## Sex interaction
+# Exploring effect modification by sex
+
+## Sex interaction terms
 
 ```{r}
 dta$SEX <- if_else(dta$SEX == 1, "Male", "Female")
@@ -99,6 +105,7 @@ exp(mean_male)
 c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 ```
 
+## Stratified Cox model by sex
 ```{r}
 fit5_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + strata(SEX) + BOOZE_q:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
