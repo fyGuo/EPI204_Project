@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(survival)
 dta <- readRDS("clean_data_0425.rds")
+dta$fu_time <- ifelse(!is.na(dta$DIE_YR), dta$DIE_YR-dta$EXAM_YR, dta$LAST_YR-dta$EXAM_YR)
+dta<-dta %>% filter(fu_time>0)
 dim(dta)
 ```
 
@@ -24,7 +26,7 @@ dta$fu_time <- ifelse(!is.na(dta$DIE_YR),  dta$DIE_YR - dta$EXAM_YR,
 dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
 
 fit1_q <- glm(cancer_death ~ BOOZE_q, data = dta, family =binomial(link='logit'))
-fit1_q %>% summary()
+#fit1_q %>% summary()
 beta <- coef(fit1_q)
 SE <- coef(summary(fit1_q))[,2]
 lcl <- beta-qnorm(0.975)*SE 
@@ -32,7 +34,7 @@ ucl <- beta+qnorm(0.975)*SE
 (cbind(exp(beta), exp(lcl), exp(ucl)))
 
 fit1_con <- glm(cancer_death ~ BOOZE, data = dta, family =binomial(link='logit'))
-fit1_con %>% summary()
+#fit1_con %>% summary()
 beta <- coef(fit1_con)
 SE <- coef(summary(fit1_con))[,2]
 lcl <- beta-qnorm(0.975)*SE 
@@ -49,7 +51,7 @@ fit1_ord %>% summary()
 ## Adjust for age
 ```{r}
 fit2_q <- glm(cancer_death ~ BOOZE_q + AGEYRS, data = dta, family =binomial(link='logit'))
-fit2_q %>% summary()
+#fit2_q %>% summary()
 beta <- coef(fit2_q)
 SE <- coef(summary(fit2_q))[,2]
 lcl <- beta-qnorm(0.975)*SE 
@@ -57,7 +59,7 @@ ucl <- beta+qnorm(0.975)*SE
 (cbind(exp(beta), exp(lcl), exp(ucl)))
 
 fit2_con <- glm(cancer_death ~ BOOZE + AGEYRS, data = dta, family =binomial(link='logit'))
-fit2_con %>% summary()
+#fit2_con %>% summary()
 beta <- coef(fit2_con)
 SE <- coef(summary(fit2_con))[,2]
 lcl <- beta-qnorm(0.975)*SE 
@@ -75,7 +77,7 @@ fit2_ord %>% summary()
 fit3_q <- glm(cancer_death ~ BOOZE_q + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta, family =binomial(link='logit'))
-fit3_q %>% summary()
+#fit3_q %>% summary()
 beta <- coef(fit3_q)
 SE <- coef(summary(fit3_q))[,2]
 lcl <- beta-qnorm(0.975)*SE 
@@ -85,7 +87,7 @@ ucl <- beta+qnorm(0.975)*SE
 fit3_con <- glm(cancer_death ~ BOOZE + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE)+ as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta, family =binomial(link='logit'))
-fit3_con %>% summary()
+#fit3_con %>% summary()
 beta <- coef(fit3_con)
 SE <- coef(summary(fit3_con))[,2]
 lcl <- beta-qnorm(0.975)*SE 
