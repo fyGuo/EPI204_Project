@@ -1,14 +1,19 @@
 ---
-title: "Cox_FG_0427"
-author: "Fuyu Guo"
+title: "Cox model"
+author: "Fuyu Guo; Jueyi Liu; Xinyi qian"
 date: "4/27/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
+This RMD file is corresponding to the Cox models in the main analysis following the second conceputal framework (the study is simplied as a cross-sectional study and time scale is time since entry)
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+# Load data and packages
 ```{r}
 library(tidyverse)
 library(survival)
@@ -21,49 +26,56 @@ dta$fu_time <- ifelse(!is.na(dta$DIE_YR),  dta$DIE_YR - dta$EXAM_YR,
 dta <- dta %>% filter(fu_time > 0)
 ```
 
-
-## Crude analysis
+# Main analysis
+## Model 1: Crude analysis
 ```{r}
-
-
 dta$BOOZE_ord <- dta$BOOZE_q %>% as.numeric()
+# categorical version
 fit1_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q, data = dta)
 fit1_q %>% summary()
 
+# continuous version
 fit1_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE, data = dta)
 fit1_con %>% summary()
 
+# ordinal version for p-value for trend
 fit1_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord, data = dta)
 fit1_ord %>% summary()
 ```
 
 
 
-## Adjust for age
+## Model 2: Adjusting for age
 ```{r}
+# categorical version
 fit2_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS, data = dta)
 fit2_q %>% summary()
 
+# continuous version
 fit2_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS, data = dta)
 fit2_con %>% summary()
 
+# ordinal version for p-value for trend
 fit2_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord + AGEYRS, data = dta)
 fit2_ord %>% summary()
 ```
 
 
-## MV analysis
+## Model 3: MV-adjusted analysis
 ```{r}
+# categorical version
 fit3_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit3_q %>% summary()
 
+# continuous version
 fit3_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE)+ as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit3_con %>% summary()
 
+# ordinal version for p-value for trend
 fit3_ord <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_ord + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
@@ -72,11 +84,11 @@ fit3_ord %>% summary()
 
 # Exploring effect modification by sex
 
-## Sex interaction terms
-
+## Sex interaction terms in the Cox model
 ```{r}
 dta$SEX <- if_else(dta$SEX == 1, "Male", "Female")
 
+# categorical version
 fit4_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + BOOZE_q:SEX + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
@@ -92,6 +104,7 @@ c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 
 
 ```{r}
+# Continuous version
 fit4_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + BOOZE:SEX  + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
@@ -105,8 +118,9 @@ exp(mean_male)
 c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 ```
 
-## Stratified Cox model by sex
+## Stratified Cox model by sex, and adding an interaction term by SEX and alcohol consumption
 ```{r}
+# Categorical version
 fit5_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + strata(SEX) + BOOZE_q:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit5_q %>% summary()
@@ -119,6 +133,7 @@ exp(mean_male)
 c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 ```
 ```{r}
+# Continuous version
 fit5_cont <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + strata(SEX) + BOOZE:strata(SEX) + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 fit5_cont %>% summary()
@@ -135,6 +150,7 @@ c(mean_male - 1.96*sd, mean_male+ 1.96*sd) %>% exp()
 ## Subgroup analysis
 
 ```{r}
+# categorical version
 fit6_q_m <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Male",])
 fit6_q_m %>% summary()
@@ -151,6 +167,7 @@ z <- (coef(fit6_q_f)[3] - coef(fit6_q_m)[3])/sqrt(vcov(fit6_q_f)[3,3] + vcov(fit
 
 
 ```{r}
+# continuous version
 fit6_cont_m <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS  + as.factor(RACE) + GRADES + as.factor(MARRY) + as.factor(SIZE) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta[dta$SEX == "Male",])
 fit6_cont_m %>% summary()
@@ -165,32 +182,33 @@ z <- (coef(fit6_cont_f)[1] - coef(fit6_cont_m)[1])/sqrt(vcov(fit6_cont_f)[1,1] +
 ```
 
 
-## PH-assumption
-- MV-adjusted categorical variable
+# Checking PH-assumption
 ```{r}
+# categorical version
 fit3_q <- coxph(Surv(fu_time, cancer_death) ~ BOOZE_q + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 cox.zph(fit3_q)
 
+```
 
+```{r}
+# continuous version
 fit3_con <- coxph(Surv(fu_time, cancer_death) ~ BOOZE + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
 cox.zph(fit3_con)
 ```
 
-## Non-linearity
+# Exploring Non-linearity
 ```{r}
 library(splines)
 fit_nl <- coxph(Surv(fu_time, cancer_death) ~ ns(BOOZE, knots = 3) + AGEYRS +
                       SEX + as.factor(RACE) + GRADES + as.factor(SIZE) + as.factor(MARRY) + AVGSMK + as.factor(SMSA) + URBAN + 
                       HTN_REP + RBC + DRMI + DIAB, data = dta)
-fit_nl
 x <- seq(0,21, 0.5)
 loghr <- ns(x, knots = 3) %*% coef(fit_nl)[c(1,2)]
 vcov <- vcov(fit_nl)[c(1,2), c(1,2)]
-ns(x, knots = 3) %*% vcov(fit_nl)[c(1,2), c(1,2)] %*% t(ns(x, knots = 3))
 var <- diag(ns(x, knots = 3) %*% vcov(fit_nl)[c(1,2), c(1,2)] %*% t(ns(x, knots = 3)))
 se <- sqrt(var)
 df <- tibble(x = x,
